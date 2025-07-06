@@ -1,10 +1,7 @@
 title: Suspicious Homoglyph Email Sender Domain Detected
 id: 1cbeac47-fb8a-4c2e-b9f6-4d8cb192e3fa
 status: experimental
-description: Detects emails where the sender domain is a known homoglyph variation of a trusted domain 
-(e.g. rnicrosoft.com instead of microsoft.com)
-Intended to be used with a Splunk lookup table called 'homoglyph_domains.csv' for enrichment.
-This Sigma rule simulates the lookup by hardcoding known homoglyph domains.
+description: Detects emails where the sender domain is a known homoglyph variation of a trusted domain (e.g. rnicrosoft.com instead of microsoft.com) Intended to be used with a Splunk lookup table called 'homoglyph_domains.csv' for enrichment. This Sigma rule simulates the lookup by hardcoding known homoglyph domains.
 author: Wong Shih Ning
 logsource:
   product: email
