@@ -3,7 +3,7 @@ name: Sigma Rule Validator
 on:
   push:
     paths:
-      - 'SigmaTestRules/**/*.yml'
+      - '**/*.yml'
   workflow_dispatch:
 
 jobs:
@@ -25,4 +25,4 @@ jobs:
 
       - name: Check Sigma Rules
         run: |
-          sigma check SigmaTestRules/
+          sigma check .
