@@ -4,6 +4,9 @@ on:
   push:
     paths:
       - 'HomoglyphRelatedRules/**/*.yml'
+      - 'BruteForce/**/*.yml'
+      - 'DefenseEvasion/**/*.yml'
+      - 'Phishing/SuspiciousFileOpen/**/*.yml'
   pull_request:
     paths:
       - 'HomoglyphRelatedRules/**/*.yml'
@@ -29,4 +32,4 @@ jobs:
 
       - name: Check Sigma Rules
         run: |
-          sigma check HomoglyphRelatedRules/
+          sigma check HomoglyphRelatedRules/ BruteForce/ DefenseEvasion/ Phishing/SuspiciousFileOpen/
