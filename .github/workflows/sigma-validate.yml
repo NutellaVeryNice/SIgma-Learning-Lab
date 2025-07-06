@@ -5,9 +5,6 @@ on:
     paths:
       - 'sigma-rules/**/*.yml'
   workflow_dispatch:
-  pull_request:
-    paths:
-      - 'SigmaTestRules/**/*.yml'
 
 jobs:
   validate:
@@ -22,10 +19,10 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Install Sigma CLI
+      - name: Install sigma-cli
         run: |
           pip install sigma-cli
 
-      - name: Validate Sigma Rules
+      - name: Check Sigma Rules
         run: |
-          sigma validate sigma-rules/
+          sigma check sigma-rules/
