@@ -1,0 +1,25 @@
+title: Okta User Account Locked Out
+id: 14701da0-4b0f-4ee6-9c95-2ffb4e73bb9a
+status: test
+description: Detects when a user account is locked out.
+references:
+    - https://developer.okta.com/docs/reference/api/system-log/
+    - https://developer.okta.com/docs/reference/api/event-types/
+author: Wong Shih Ning
+date: 2025-07-01
+tags:
+    - attack.impact
+logsource:
+    product: okta
+    service: okta
+detection:
+    selection:
+        displaymessage: 
+            - Max sign in attempts exceeded
+            - Account locked out by administrator
+        outcome: 
+            - FAILURE
+    condition: selection
+falsepositives:
+    - Unknown
+level: medium
