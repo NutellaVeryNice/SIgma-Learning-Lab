@@ -3,10 +3,10 @@ name: Sigma Rule Validator
 on:
   push:
     paths:
-      - 'sigma-rules/**/*.yml'
+      - 'SigmaTestRules/**/*.yml'
   pull_request:
     paths:
-      - 'sigma-rules/**/*.yml'
+      - 'SigmaTestRules/**/*.yml'
 
 jobs:
   validate:
