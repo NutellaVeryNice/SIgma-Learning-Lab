@@ -3,7 +3,7 @@ name: Sigma Rule Validator
 on:
   push:
     paths:
-      - 'sigma-rules/**/*.yml'
+      - 'SigmaTestRules/**/*.yml'
   workflow_dispatch:
 
 jobs:
