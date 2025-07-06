@@ -1,6 +1,6 @@
 title: Suspicious Homoglyph Domains Accessed
 id: e7fce3fc-19c2-41df-9e90-123456789abc
-description: Detects DNS queries or HTTP traffic to domains that are visually similar to well-known domains (homoglyphs). Intended to be used with a Splunk lookup table called 'homoglyph_domains.csv' for enrichment. This Sigma rule simulates the lookup by hardcoding known homoglyph domains.
+description: Detects DNS queries or HTTP traffic to domains that are visually similar to well-known domains (homoglyphs).
 status: experimental
 author: Wong Shih Ning
 date: 2025/07/01
