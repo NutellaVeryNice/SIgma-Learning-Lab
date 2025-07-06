@@ -3,8 +3,12 @@ name: Sigma Rule Validator
 on:
   push:
     paths:
-      - 'HomoglpyhRelatedRules/*.yml'
+      - 'HomoglyphRelatedRules/**/*.yml'
+  pull_request:
+    paths:
+      - 'HomoglyphRelatedRules/**/*.yml'
   workflow_dispatch:
+
 
 jobs:
   validate:
@@ -25,4 +29,4 @@ jobs:
 
       - name: Check Sigma Rules
         run: |
-          sigma check HomoglpyhRelatedRules/
+          sigma check HomoglyphRelatedRules/
