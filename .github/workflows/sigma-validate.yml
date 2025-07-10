@@ -29,12 +29,19 @@ jobs:
           python-version: '3.11'
 
       - name: Install sigma-cli
-        run: |
-          pip install sigma-cli
+        run: pip install sigma-cli
 
       - name: Validate Sigma Rules
         run: |
-          sigma check HomoglyphRelatedRules/ BruteForce/ DefenseEvasion/ Phishing/SuspiciousFileOpen/
+          echo "🔍 Validating Sigma rules..."
+          for rule in $(find HomoglyphRelatedRules/ BruteForce/ DefenseEvasion/ Phishing/SuspiciousFileOpen/ -name '*.yml'); do
+            echo "✅ Checking $rule"
+            if ! sigma check "$rule"; then
+              echo "❌ Invalid rule: $rule"
+              exit 1
+            fi
+          done
+          echo "✅ All rules passed validation."
 
       - name: Convert Sigma Rules (KQL, Splunk, Elastic)
         run: |
@@ -43,7 +50,6 @@ jobs:
 
           for rule in $(find HomoglyphRelatedRules/ BruteForce/ DefenseEvasion/ Phishing/SuspiciousFileOpen/ -name '*.yml'); do
             base_name=$(basename "$rule" .yml)
-
             echo "🔄 Converting $rule ..."
 
             # Convert to KQL
@@ -77,19 +83,25 @@ jobs:
           echo "🔚 Conversion finished with $fail_count failure(s)."
 
       - name: Upload converted KQL rules
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: kql-detection-rules
           path: converted/kql/
+          if-no-files-found: warn
 
       - name: Upload converted Splunk rules
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: splunk-detection-rules
           path: converted/splunk/
+          if-no-files-found: warn
 
       - name: Upload converted Elastic rules
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: elastic-detection-rules
           path: converted/elastic/
+          if-no-files-found: warn
