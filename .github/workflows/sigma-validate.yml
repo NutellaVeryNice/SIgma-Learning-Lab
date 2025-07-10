@@ -10,8 +10,9 @@ on:
   pull_request:
     paths:
       - 'HomoglyphRelatedRules/**/*.yml'
-      - 'Phishing/**/*.yml'
-      - 'CloudRules/**/*.yml'
+      - 'BruteForce/**/*.yml'
+      - 'DefenseEvasion/**/*.yml'
+      - 'Phishing/SuspiciousFileOpen/**/*.yml'
   workflow_dispatch:
 
 jobs:
