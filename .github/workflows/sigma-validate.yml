@@ -41,7 +41,7 @@ jobs:
           mkdir -p converted/kql converted/splunk converted/elastic
           fail_count=0
 
-          for rule in $(find HomoglyphRelatedRules/ Phishing/ CloudRules/ -name '*.yml'); do
+          for rule in $(find HomoglyphRelatedRules/ BruteForce/ DefenseEvasion/ Phishing/SuspiciousFileOpen/ -name '*.yml'); do
             base_name=$(basename "$rule" .yml)
 
             echo "🔄 Converting $rule ..."
@@ -77,19 +77,19 @@ jobs:
           echo "🔚 Conversion finished with $fail_count failure(s)."
 
       - name: Upload converted KQL rules
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: kql-detection-rules
           path: converted/kql/
 
       - name: Upload converted Splunk rules
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: splunk-detection-rules
           path: converted/splunk/
 
       - name: Upload converted Elastic rules
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: elastic-detection-rules
           path: converted/elastic/
