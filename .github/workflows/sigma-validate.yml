@@ -1,4 +1,4 @@
-name: Sigma Validate + Convert + Upload
+name: Sigma Validate + Convert + Upload (Combined Files)
 
 on:
   push:
@@ -43,65 +43,72 @@ jobs:
           done
           echo "✅ All rules passed validation."
 
-      - name: Convert Sigma Rules (KQL, Splunk, Elastic)
+      - name: Convert & Concatenate Sigma Rules
         run: |
-          mkdir -p converted/kql converted/splunk converted/elastic
+          mkdir -p converted
+          touch converted/all-kql.kql
+          touch converted/all-spl.spl
+          touch converted/all-elastic.json
+
           fail_count=0
+          rule_count=0
 
           for rule in $(find HomoglyphRelatedRules/ BruteForce/ DefenseEvasion/ Phishing/SuspiciousFileOpen/ -name '*.yml'); do
             base_name=$(basename "$rule" .yml)
             echo "🔄 Converting $rule ..."
 
-            # Convert to KQL
-            if sigma convert --target kusto --pipeline azure_monitor --query-table AuditLogs "$rule" > "converted/kql/${base_name}.kql"; then
-              echo "✅ KQL: $rule converted successfully"
+            # KQL
+            echo -e "\n### $base_name" >> converted/all-kql.kql
+            if sigma convert --target kusto --pipeline azure_monitor --query-table AuditLogs "$rule" >> converted/all-kql.kql; then
+              echo "✅ KQL converted: $base_name"
             else
-              echo "⚠️ Failed to convert $rule to KQL"
-              rm -f "converted/kql/${base_name}.kql"
+              echo "⚠️ KQL conversion failed: $base_name"
               fail_count=$((fail_count+1))
             fi
 
-            # Convert to Splunk
-            if sigma convert --target splunk "$rule" > "converted/splunk/${base_name}.spl"; then
-              echo "✅ Splunk: $rule converted successfully"
+            # Splunk
+            echo -e "\n### $base_name" >> converted/all-spl.spl
+            if sigma convert --target splunk "$rule" >> converted/all-spl.spl; then
+              echo "✅ Splunk converted: $base_name"
             else
-              echo "⚠️ Failed to convert $rule to Splunk"
-              rm -f "converted/splunk/${base_name}.spl"
+              echo "⚠️ Splunk conversion failed: $base_name"
               fail_count=$((fail_count+1))
             fi
 
-            # Convert to Elastic DSL
-            if sigma convert --target es-dsl "$rule" > "converted/elastic/${base_name}.json"; then
-              echo "✅ Elastic: $rule converted successfully"
+            # Elastic
+            echo -e "\n### $base_name" >> converted/all-elastic.json
+            if sigma convert --target es-dsl "$rule" >> converted/all-elastic.json; then
+              echo "✅ Elastic DSL converted: $base_name"
             else
-              echo "⚠️ Failed to convert $rule to Elastic DSL"
-              rm -f "converted/elastic/${base_name}.json"
+              echo "⚠️ Elastic conversion failed: $base_name"
               fail_count=$((fail_count+1))
             fi
+
+            rule_count=$((rule_count+1))
           done
 
-          echo "🔚 Conversion finished with $fail_count failure(s)."
+          echo "✅ Converted $rule_count rule(s) with $fail_count failure(s)."
 
-      - name: Upload converted KQL rules
+      - name: Upload Combined KQL
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: kql-detection-rules
-          path: converted/kql/
+          name: kql-all
+          path: converted/all-kql.kql
           if-no-files-found: warn
 
-      - name: Upload converted Splunk rules
+      - name: Upload Combined Splunk
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: splunk-detection-rules
-          path: converted/splunk/
+          name: splunk-all
+          path: converted/all-spl.spl
           if-no-files-found: warn
 
-      - name: Upload converted Elastic rules
+      - name: Upload Combined Elastic DSL
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: elastic-detection-rules
-          path: converted/elastic/
+          name: elastic-all
+          path: converted/all-elastic.json
           if-no-files-found: warn
