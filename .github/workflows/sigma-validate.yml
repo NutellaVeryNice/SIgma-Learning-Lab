@@ -1,79 +1,51 @@
-name: Sigma Conversion Workflow
+name: Sigma Rules Validation
 
 on:
   push:
-    branches:
-      - main
+    paths:
+      - 'HomoglyphRelatedRules/**/*.yml'
+      - 'BruteForce/**/*.yml'
+      - 'DefenseEvasion/**/*.yml'
+      - 'Phishing/**/*.yml'
+      - 'SuspiciousFileOpen/**/*.yml'
+  pull_request:
+    paths:
+      - 'HomoglyphRelatedRules/**/*.yml'
+      - 'BruteForce/**/*.yml'
+      - 'DefenseEvasion/**/*.yml'
+      - 'Phishing/**/*.yml'
+      - 'SuspiciousFileOpen/**/*.yml'
 
 jobs:
-  convert-sigma-rules:
+  validate-sigma:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
+      - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Set up Python 3.11
-        uses: actions/setup-python@v4
-        with:
-          python-version: 3.11
-
-      - name: Install sigma-cli and plugins
+      - name: Install sigma-cli
         run: |
-          pip install --upgrade pip
+          python3 -m pip install --upgrade pip
           pip install sigma-cli
-          sigma plugin install target-kusto
-          sigma plugin install target-splunk
-          sigma plugin install target-elasticsearch
 
-      - name: Run Sigma conversion script
+      - name: Validate Sigma rules
         run: |
-          mkdir -p converted
-          : > converted/all-kql.kql
-          : > converted/all-spl.spl
-          : > converted/all-elastic.json
-
           fail_count=0
           rule_count=0
-
-          for rule in $(find HomoglyphRelatedRules/ BruteForce/ DefenseEvasion/ Phishing/SuspiciousFileOpen/ -name '*.yml'); do
-            base_name=$(basename "$rule" .yml)
-            echo "🔄 Converting $rule ..."
-
-            # --- KQL ---
-            echo -e "\n### $base_name" >> converted/all-kql.kql
-            if ! kql_output=$(sigma convert --target kusto "$rule" 2>&1); then
-              echo "❌ KQL conversion failed: $rule"
-              echo "$kql_output"
+          for rule in $(find HomoglyphRelatedRules/ BruteForce/ DefenseEvasion/ Phishing/ SuspiciousFileOpen/ -name '*.yml'); do
+            echo "🔍 Validating $rule ..."
+            if ! sigma validate "$rule"; then
+              echo "❌ Validation failed: $rule"
               fail_count=$((fail_count+1))
             else
-              echo "$kql_output" >> converted/all-kql.kql
-              echo "✅ KQL: $rule"
+              echo "✅ Valid: $rule"
             fi
-
-            # --- Splunk ---
-            echo -e "\n### $base_name" >> converted/all-spl.spl
-            if ! spl_output=$(sigma convert --target splunk "$rule" 2>&1); then
-              echo "❌ Splunk conversion failed: $rule"
-              echo "$spl_output"
-              fail_count=$((fail_count+1))
-            else
-              echo "$spl_output" >> converted/all-spl.spl
-              echo "✅ Splunk: $rule"
-            fi
-
-            # --- Elasticsearch DSL ---
-            echo -e "\n### $base_name" >> converted/all-elastic.json
-            if ! es_output=$(sigma convert --target elasticsearch "$rule" 2>&1); then
-              echo "❌ Elastic conversion failed: $rule"
-              echo "$es_output"
-              fail_count=$((fail_count+1))
-            else
-              echo "$es_output" >> converted/all-elastic.json
-              echo "✅ Elastic: $rule"
-            fi
-
             rule_count=$((rule_count+1))
           done
 
-          echo "🧾 Finished converting $rule_count rule(s) with $fail_count failure(s)."
+          echo "🧾 Finished validating $rule_count rule(s) with $fail_count failure(s)."
+
+          if [ "$fail_count" -ne 0 ]; then
+            exit 1
+          fi
