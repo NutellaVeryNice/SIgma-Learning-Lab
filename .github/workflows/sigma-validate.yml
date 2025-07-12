@@ -28,12 +28,10 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Install sigma-cli and backends
+      - name: Install sigma-cli and supported backends
         run: |
           pip install sigma-cli
-          sigma plugin install target-splunk
-          sigma plugin install target-kusto
-          sigma plugin install target-elasticsearch
+          pip install sigma-backend-elasticsearch sigma-backend-kusto sigma-backend-splunk
 
       - name: Validate Sigma Rules
         run: |
@@ -47,9 +45,8 @@ jobs:
           done
           echo "✅ All rules passed validation."
 
-      - name: Convert & Concatenate Sigma Rules
+      - name: Convert and Bundle Sigma Rules
         run: |
-          set +e
           mkdir -p converted
           : > converted/all-kql.kql
           : > converted/all-spl.spl
@@ -88,7 +85,7 @@ jobs:
               fail_count=$((fail_count+1))
             fi
 
-            # --- Elastic ---
+            # --- Elastic DSL ---
             echo -e "\n### $base_name" >> converted/all-elastic.json
             es_output=$(sigma convert --target elasticsearch "$rule" 2>&1)
             es_status=$?
@@ -106,26 +103,26 @@ jobs:
 
           echo "🔚 Finished converting $rule_count rule(s) with $fail_count failure(s)."
 
-      - name: Upload all KQL rules
+      - name: Upload converted KQL rules
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: kql-detection-rules
+          name: all-kql
           path: converted/all-kql.kql
           if-no-files-found: warn
 
-      - name: Upload all Splunk rules
+      - name: Upload converted Splunk rules
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: splunk-detection-rules
+          name: all-spl
           path: converted/all-spl.spl
           if-no-files-found: warn
 
-      - name: Upload all Elastic rules
+      - name: Upload converted Elastic rules
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: elastic-detection-rules
+          name: all-elastic
           path: converted/all-elastic.json
           if-no-files-found: warn
