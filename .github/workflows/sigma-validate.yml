@@ -1,52 +1,37 @@
-name: Sigma Rules Validation
+name: Sigma Rule Validator
 
 on:
-  workflow_dispatch:   # manual trigger
   push:
     paths:
       - 'HomoglyphRelatedRules/**/*.yml'
       - 'BruteForce/**/*.yml'
       - 'DefenseEvasion/**/*.yml'
-      - 'Phishing/**/*.yml'
-      - 'SuspiciousFileOpen/**/*.yml'
+      - 'Phishing/SuspiciousFileOpen/**/*.yml'
   pull_request:
     paths:
       - 'HomoglyphRelatedRules/**/*.yml'
       - 'BruteForce/**/*.yml'
       - 'DefenseEvasion/**/*.yml'
-      - 'Phishing/**/*.yml'
-      - 'SuspiciousFileOpen/**/*.yml'
+      - 'Phishing/SuspiciousFileOpen/**/*.yml'
+  workflow_dispatch:
 
 jobs:
-  validate-sigma:
+  validate:
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
 
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
       - name: Install sigma-cli
         run: |
-          python3 -m pip install --upgrade pip
           pip install sigma-cli
 
-      - name: Validate Sigma rules
+      - name: Check Sigma Rules (Multiple Folders)
         run: |
-          fail_count=0
-          rule_count=0
-          for rule in $(find HomoglyphRelatedRules/ BruteForce/ DefenseEvasion/ Phishing/ SuspiciousFileOpen/ -name '*.yml'); do
-            echo "🔍 Validating $rule ..."
-            if ! sigma validate "$rule"; then
-              echo "❌ Validation failed: $rule"
-              fail_count=$((fail_count+1))
-            else
-              echo "✅ Valid: $rule"
-            fi
-            rule_count=$((rule_count+1))
-          done
-
-          echo "🧾 Finished validating $rule_count rule(s) with $fail_count failure(s)."
-
-          if [ "$fail_count" -ne 0 ]; then
-            exit 1
-          fi
+          sigma check HomoglyphRelatedRules/ BruteForce/ DefenseEvasion/ Phishing/SuspiciousFileOpen/
