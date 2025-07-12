@@ -60,33 +60,39 @@ jobs:
             # --- KQL ---
             echo -e "\n### $base_name" >> converted/all-kql.kql
             kql_output=$(sigma convert --target kusto --pipeline azure_monitor --query-table AuditLogs "$rule" 2>&1)
-            if [[ -n "$kql_output" ]]; then
+            kql_status=$?
+            if [[ $kql_status -eq 0 && -n "$kql_output" ]]; then
               echo "$kql_output" >> converted/all-kql.kql
               echo "✅ KQL: $rule"
             else
-              echo "⚠️ Empty KQL output for $rule"
+              echo "⚠️ KQL conversion failed: $rule"
+              echo "$kql_output"
               fail_count=$((fail_count+1))
             fi
 
             # --- Splunk ---
             echo -e "\n### $base_name" >> converted/all-spl.spl
             spl_output=$(sigma convert --target splunk "$rule" 2>&1)
-            if [[ -n "$spl_output" ]]; then
+            spl_status=$?
+            if [[ $spl_status -eq 0 && -n "$spl_output" ]]; then
               echo "$spl_output" >> converted/all-spl.spl
               echo "✅ Splunk: $rule"
             else
-              echo "⚠️ Empty Splunk output for $rule"
+              echo "⚠️ Splunk conversion failed: $rule"
+              echo "$spl_output"
               fail_count=$((fail_count+1))
             fi
 
             # --- Elastic DSL ---
             echo -e "\n### $base_name" >> converted/all-elastic.json
             es_output=$(sigma convert --target es-dsl "$rule" 2>&1)
-            if [[ -n "$es_output" ]]; then
+            es_status=$?
+            if [[ $es_status -eq 0 && -n "$es_output" ]]; then
               echo "$es_output" >> converted/all-elastic.json
               echo "✅ Elastic: $rule"
             else
-              echo "⚠️ Empty Elastic output for $rule"
+              echo "⚠️ Elastic conversion failed: $rule"
+              echo "$es_output"
               fail_count=$((fail_count+1))
             fi
 
