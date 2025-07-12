@@ -1,4 +1,4 @@
-name: Sigma Validate + Convert + Upload (Combined Files)
+name: Sigma Validate + Convert + Upload
 
 on:
   push:
@@ -28,8 +28,12 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Install sigma-cli
-        run: pip install sigma-cli
+      - name: Install sigma-cli and backends
+        run: |
+          pip install sigma-cli
+          sigma plugin install target-splunk
+          sigma plugin install target-kusto
+          sigma plugin install target-elasticsearch
 
       - name: Validate Sigma Rules
         run: |
@@ -45,7 +49,7 @@ jobs:
 
       - name: Convert & Concatenate Sigma Rules
         run: |
-          set +e  # Allow continuation after command failures
+          set +e
           mkdir -p converted
           : > converted/all-kql.kql
           : > converted/all-spl.spl
@@ -60,7 +64,7 @@ jobs:
 
             # --- KQL ---
             echo -e "\n### $base_name" >> converted/all-kql.kql
-            kql_output=$(sigma convert --target kusto --pipeline azure_monitor --query-table AuditLogs "$rule" 2>&1)
+            kql_output=$(sigma convert --target kusto "$rule" 2>&1)
             kql_status=$?
             if [[ $kql_status -eq 0 && -n "$kql_output" ]]; then
               echo "$kql_output" >> converted/all-kql.kql
@@ -84,9 +88,9 @@ jobs:
               fail_count=$((fail_count+1))
             fi
 
-            # --- Elastic DSL ---
+            # --- Elastic ---
             echo -e "\n### $base_name" >> converted/all-elastic.json
-            es_output=$(sigma convert --target es-dsl "$rule" 2>&1)
+            es_output=$(sigma convert --target elasticsearch "$rule" 2>&1)
             es_status=$?
             if [[ $es_status -eq 0 && -n "$es_output" ]]; then
               echo "$es_output" >> converted/all-elastic.json
@@ -102,26 +106,26 @@ jobs:
 
           echo "🔚 Finished converting $rule_count rule(s) with $fail_count failure(s)."
 
-      - name: Upload Combined KQL
+      - name: Upload all KQL rules
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: kql-all
+          name: kql-detection-rules
           path: converted/all-kql.kql
           if-no-files-found: warn
 
-      - name: Upload Combined Splunk
+      - name: Upload all Splunk rules
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: splunk-all
+          name: splunk-detection-rules
           path: converted/all-spl.spl
           if-no-files-found: warn
 
-      - name: Upload Combined Elastic DSL
+      - name: Upload all Elastic rules
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: elastic-all
+          name: elastic-detection-rules
           path: converted/all-elastic.json
           if-no-files-found: warn
