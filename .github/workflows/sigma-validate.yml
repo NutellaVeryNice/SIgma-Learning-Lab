@@ -1,6 +1,7 @@
 name: Sigma Rules Validation
 
 on:
+  workflow_dispatch:   # manual trigger
   push:
     paths:
       - 'HomoglyphRelatedRules/**/*.yml'
