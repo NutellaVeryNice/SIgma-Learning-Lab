@@ -1,32 +1,32 @@
-name: Sigma Rule Conversion and Aggregation
+name: Sigma Conversion Workflow
 
 on:
   push:
-    paths:
-      - 'HomoglyphRelatedRules/**'
-      - 'BruteForce/**'
-      - 'DefenseEvasion/**'
-      - 'Phishing/SuspiciousFileOpen/**'
-      - '.github/workflows/sigma-convert.yml'
-  workflow_dispatch:
+    branches:
+      - main
 
 jobs:
-  convert:
+  convert-sigma-rules:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v4
         with:
-          python-version: '3.11'
+          python-version: 3.11
 
-      - name: Install sigma-cli with required backends
+      - name: Install sigma-cli and plugins
         run: |
-          pip install 'sigma-cli[target-elasticsearch,target-kusto,target-splunk]'
+          pip install --upgrade pip
+          pip install sigma-cli
+          sigma plugin install target-kusto
+          sigma plugin install target-splunk
+          sigma plugin install target-elasticsearch
 
-      - name: Convert and aggregate Sigma rules
+      - name: Run Sigma conversion script
         run: |
           mkdir -p converted
           : > converted/all-kql.kql
@@ -42,44 +42,38 @@ jobs:
 
             # --- KQL ---
             echo -e "\n### $base_name" >> converted/all-kql.kql
-            kql_output=$(sigma convert --target kusto "$rule" 2>&1)
-            kql_status=$?
-            if [[ $kql_status -eq 0 && -n "$kql_output" ]]; then
-              echo "$kql_output" >> converted/all-kql.kql
-              echo "✅ KQL: $rule"
-            else
-              echo "⚠️ KQL conversion failed: $rule"
+            if ! kql_output=$(sigma convert --target kusto "$rule" 2>&1); then
+              echo "❌ KQL conversion failed: $rule"
               echo "$kql_output"
               fail_count=$((fail_count+1))
+            else
+              echo "$kql_output" >> converted/all-kql.kql
+              echo "✅ KQL: $rule"
             fi
 
             # --- Splunk ---
             echo -e "\n### $base_name" >> converted/all-spl.spl
-            spl_output=$(sigma convert --target splunk "$rule" 2>&1)
-            spl_status=$?
-            if [[ $spl_status -eq 0 && -n "$spl_output" ]]; then
-              echo "$spl_output" >> converted/all-spl.spl
-              echo "✅ Splunk: $rule"
-            else
-              echo "⚠️ Splunk conversion failed: $rule"
+            if ! spl_output=$(sigma convert --target splunk "$rule" 2>&1); then
+              echo "❌ Splunk conversion failed: $rule"
               echo "$spl_output"
               fail_count=$((fail_count+1))
+            else
+              echo "$spl_output" >> converted/all-spl.spl
+              echo "✅ Splunk: $rule"
             fi
 
-            # --- Elastic DSL ---
+            # --- Elasticsearch DSL ---
             echo -e "\n### $base_name" >> converted/all-elastic.json
-            es_output=$(sigma convert --target elasticsearch "$rule" 2>&1)
-            es_status=$?
-            if [[ $es_status -eq 0 && -n "$es_output" ]]; then
-              echo "$es_output" >> converted/all-elastic.json
-              echo "✅ Elastic: $rule"
-            else
-              echo "⚠️ Elastic conversion failed: $rule"
+            if ! es_output=$(sigma convert --target elasticsearch "$rule" 2>&1); then
+              echo "❌ Elastic conversion failed: $rule"
               echo "$es_output"
               fail_count=$((fail_count+1))
+            else
+              echo "$es_output" >> converted/all-elastic.json
+              echo "✅ Elastic: $rule"
             fi
 
             rule_count=$((rule_count+1))
           done
 
-          echo "🔚 Finished converting $rule_count rule(s) with $fail_count failure(s)."
+          echo "🧾 Finished converting $rule_count rule(s) with $fail_count failure(s)."
