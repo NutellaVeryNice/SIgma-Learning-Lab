@@ -46,9 +46,9 @@ jobs:
       - name: Convert & Concatenate Sigma Rules
         run: |
           mkdir -p converted
-          touch converted/all-kql.kql
-          touch converted/all-spl.spl
-          touch converted/all-elastic.json
+          : > converted/all-kql.kql
+          : > converted/all-spl.spl
+          : > converted/all-elastic.json
 
           fail_count=0
           rule_count=0
@@ -57,37 +57,43 @@ jobs:
             base_name=$(basename "$rule" .yml)
             echo "🔄 Converting $rule ..."
 
-            # KQL
+            # --- KQL ---
             echo -e "\n### $base_name" >> converted/all-kql.kql
-            if sigma convert --target kusto --pipeline azure_monitor --query-table AuditLogs "$rule" >> converted/all-kql.kql; then
-              echo "✅ KQL converted: $base_name"
+            kql_output=$(sigma convert --target kusto --pipeline azure_monitor --query-table AuditLogs "$rule" 2>&1)
+            if [[ -n "$kql_output" ]]; then
+              echo "$kql_output" >> converted/all-kql.kql
+              echo "✅ KQL: $rule"
             else
-              echo "⚠️ KQL conversion failed: $base_name"
+              echo "⚠️ Empty KQL output for $rule"
               fail_count=$((fail_count+1))
             fi
 
-            # Splunk
+            # --- Splunk ---
             echo -e "\n### $base_name" >> converted/all-spl.spl
-            if sigma convert --target splunk "$rule" >> converted/all-spl.spl; then
-              echo "✅ Splunk converted: $base_name"
+            spl_output=$(sigma convert --target splunk "$rule" 2>&1)
+            if [[ -n "$spl_output" ]]; then
+              echo "$spl_output" >> converted/all-spl.spl
+              echo "✅ Splunk: $rule"
             else
-              echo "⚠️ Splunk conversion failed: $base_name"
+              echo "⚠️ Empty Splunk output for $rule"
               fail_count=$((fail_count+1))
             fi
 
-            # Elastic
+            # --- Elastic DSL ---
             echo -e "\n### $base_name" >> converted/all-elastic.json
-            if sigma convert --target es-dsl "$rule" >> converted/all-elastic.json; then
-              echo "✅ Elastic DSL converted: $base_name"
+            es_output=$(sigma convert --target es-dsl "$rule" 2>&1)
+            if [[ -n "$es_output" ]]; then
+              echo "$es_output" >> converted/all-elastic.json
+              echo "✅ Elastic: $rule"
             else
-              echo "⚠️ Elastic conversion failed: $base_name"
+              echo "⚠️ Empty Elastic output for $rule"
               fail_count=$((fail_count+1))
             fi
 
             rule_count=$((rule_count+1))
           done
 
-          echo "✅ Converted $rule_count rule(s) with $fail_count failure(s)."
+          echo "🔚 Finished converting $rule_count rule(s) with $fail_count failure(s)."
 
       - name: Upload Combined KQL
         if: always()
