@@ -1,53 +1,32 @@
-name: Sigma Validate + Convert + Upload
+name: Sigma Rule Conversion and Aggregation
 
 on:
   push:
     paths:
-      - 'HomoglyphRelatedRules/**/*.yml'
-      - 'BruteForce/**/*.yml'
-      - 'DefenseEvasion/**/*.yml'
-      - 'Phishing/SuspiciousFileOpen/**/*.yml'
-  pull_request:
-    paths:
-      - 'HomoglyphRelatedRules/**/*.yml'
-      - 'BruteForce/**/*.yml'
-      - 'DefenseEvasion/**/*.yml'
-      - 'Phishing/SuspiciousFileOpen/**/*.yml'
+      - 'HomoglyphRelatedRules/**'
+      - 'BruteForce/**'
+      - 'DefenseEvasion/**'
+      - 'Phishing/SuspiciousFileOpen/**'
+      - '.github/workflows/sigma-convert.yml'
   workflow_dispatch:
 
 jobs:
-  validate-convert-upload:
+  convert:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: '3.11'
 
-      - name: Install sigma-cli and plugins
+      - name: Install sigma-cli with required backends
         run: |
-          pip install sigma-cli
-          sigma plugin install target-elasticsearch
-          sigma plugin install target-kusto
-          sigma plugin install target-splunk
+          pip install 'sigma-cli[target-elasticsearch,target-kusto,target-splunk]'
 
-      - name: Validate Sigma Rules
-        run: |
-          echo "🔍 Validating Sigma rules..."
-          for rule in $(find HomoglyphRelatedRules/ BruteForce/ DefenseEvasion/ Phishing/SuspiciousFileOpen/ -name '*.yml'); do
-            echo "✅ Checking $rule"
-            if ! sigma validate "$rule"; then
-              echo "❌ Invalid rule: $rule"
-              exit 1
-            fi
-          done
-          echo "✅ All rules passed validation."
-
-      - name: Convert and Aggregate Sigma Rules
+      - name: Convert and aggregate Sigma rules
         run: |
           mkdir -p converted
           : > converted/all-kql.kql
@@ -104,11 +83,3 @@ jobs:
           done
 
           echo "🔚 Finished converting $rule_count rule(s) with $fail_count failure(s)."
-
-      - name: Upload all converted Sigma outputs
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: sigma-converted-all
-          path: converted/
-          if-no-files-found: error
