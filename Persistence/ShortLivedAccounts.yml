@@ -1,0 +1,29 @@
+title: Short-Lived Accounts Detected
+id: f5691d99-7c29-4cf0-a5b5-b4d67d4f8fc2
+status: experimental
+description: Detects accounts that were created and deleted/disabled within a short time frame (e.g. 1 hour), which may indicate misuse of temporary Service Accounts
+author: Wong Shih Ning
+date: 2025/07/13
+logsource:
+  product: windows
+  service: security
+detection:
+  selection:
+    EventID:
+      - 4720  # Account Created
+      - 4726  # Account Deleted
+      - 4725  # Account Disabled
+  condition: selection
+fields:
+  - SubjectUserName
+  - TargetUserName
+  - EventID
+falsepositives:
+  - Legitimate test or automation accounts that are short lived by design
+  - Account provisioning scripts used in CI/CD pipelines
+level: medium
+tags:
+  - attack.persistence
+  - attack.privilege_escalation
+  - attack.t1136.001  # Create Account: Local Account
+  - detection.short_lived_account
