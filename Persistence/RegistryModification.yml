@@ -1,0 +1,27 @@
+title: Registry Modification Detected
+id: 8f1a9a8b-1234-4a56-bcde-9f0123456789
+status: experimental
+description: Detects modification of Windows registry keys or values, indicating potential suspicious or malicious activity.
+author: Wong Shih Ning
+date: 2025/07/16
+logsource:
+  product: windows
+  service: security
+detection:
+  selection:
+    EventID: 4657
+  condition: selection
+fields:
+  - SubjectUserName
+  - SubjectDomainName
+  - ObjectName
+  - HandleName
+  - EventID
+falsepositives:
+  - Legitimate software updates or administrative changes
+level: medium
+tags:
+  - attack.t1112
+  - attack.persistence
+  - attack.defense_evasion
+  - detection.registry_modification
