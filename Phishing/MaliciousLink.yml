@@ -1,0 +1,52 @@
+title: Suspicious Spearphishing Email with Malicious Link Indicators
+id: f1f25b23-8202-4f4f-b1cb-8f9a885f295e
+description: Detects emails from third-party applications that fail SPF, DKIM, or DMARC checks and contain suspicious subjects and links often used in spearphishing.
+status: experimental
+author: Wong Shih Ning
+date: 2025/07/19
+references:
+  - https://attack.mitre.org/techniques/T1566/002/
+logsource:
+  category: email
+  product: any
+detection:
+  selection_source:
+    source|contains:
+      - "o365_audit"
+      - "gmail_logs"
+      - "email_gateway"
+
+  selection_authfail:
+    spf: "fail"
+    dkim: "fail"
+    dmarc: "fail"
+
+  selection_subject:
+    subject|contains:
+      - "account security alert"
+      - "urgent action required"
+      - "password reset"
+
+  selection_url:
+    url|contains:
+      - "tinyurl.com"
+      - "bit.ly"
+      - "@"
+      - ".xyz"
+      - ".top"
+
+  condition: selection_source and selection_authfail and selection_subject and selection_url
+fields:
+  - _time
+  - sender
+  - recipient
+  - subject
+  - url
+  - risk_score
+falsepositives:
+  - Internal phishing simulation tests
+  - External newsletters with URL shorteners
+level: high
+tags:
+  - attack.phishing
+  - attack.t1566.002
