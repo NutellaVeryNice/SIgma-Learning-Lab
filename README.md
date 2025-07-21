@@ -1,4 +1,4 @@
-# SigmaTestRules 🛡️
+# Sigma Learning Lab 🛡️
 
 A curated collection of custom **Sigma detection rules** to showcase threat-hunting patterns and hone your alerting strategies.
 
