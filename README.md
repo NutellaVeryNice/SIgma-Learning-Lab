@@ -81,7 +81,7 @@ In the future, I may open contribution via pull requests. Feedback is always app
 If you're a recruiter, SOC lead, or fellow detection engineer, feel free to reach out!
 
 - **LinkedIn**: [@Wong Shih Ning](www.linkedin.com/in/wong-shih-ning-b57087222)
-- **GitHub**: [NutellaVeryNice](https://github.com/NutellaVeryNice)
+- **GitHub**: [NutellaVeryNice](https://github.com/wongsn)
 
 
 ---
