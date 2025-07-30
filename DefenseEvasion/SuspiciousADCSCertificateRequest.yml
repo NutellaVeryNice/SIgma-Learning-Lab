@@ -1,0 +1,36 @@
+title: Suspicious AD CS Certificate Request and Issuance
+id: 3f1b2a7e-9c4d-4e6a-bf12-5d8b7f3c4e1a
+status: experimental
+description: Detects unexpected AD CS certificate enrollment (EID 4886) and issuance (EID 4887) events that specify potentially abusable Extended Key Usages (EKUs), such as Code Signing or Client Authentication.
+author: Wong Shih Ning
+references:
+  - https://docs.microsoft.com/windows/security/threat-protection/auditing/event-4886
+  - https://docs.microsoft.com/windows/security/threat-protection/auditing/event-4887
+  - https://attack.mitre.org/techniques/T1553/006/
+tags:
+  - attack.T1553.006          # Certificate Authority
+  - attack.persistence
+  - attack.privilege_escalation
+  - attack.defense_evasion
+logsource:
+  product: windows
+  service: security
+detection:
+  selection_cs_request:
+    EventID: 4886
+  selection_cs_issue:
+    EventID: 4887
+  abusable_eku:
+    WinEventData.EKU|contains:
+      - '1.3.6.1.5.5.7.3.2'    # Client Authentication
+      - '1.3.6.1.5.5.7.3.3'    # Code Signing
+  condition: (selection_cs_request or selection_cs_issue) and abusable_eku
+fields:
+  - EventID
+  - WinEventData.SubjectUserName
+  - WinEventData.RequestedTemplateName
+  - WinEventData.IssuedCertificateTemplateName
+  - WinEventData.EKU
+falsepositives:
+  - Legitimate automated certificate renewals or software deployment processes requesting Code Signing or Client Authentication certificates
+level: high
